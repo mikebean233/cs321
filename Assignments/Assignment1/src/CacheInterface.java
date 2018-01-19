@@ -1,9 +1,3 @@
-import java.io.FileNotFoundException;
-
-/**
- * 
- */
-
 /**
  * @author Rob
  *
@@ -25,12 +19,12 @@ public interface CacheInterface<T> {
 	/* removeObject
 	 *   -- Removes an object from the end of the cache. 
 	 */
-	public void removeObject();	
+	public void removeObject(int cacheLevel);	
 	
 	/* clearCache
 	 *   -- Removes an object from the cache. 
 	 */
-	public void clearCache();
+	public void clearCache(int cacheLevel);
 	
 
 	
