@@ -120,6 +120,9 @@ public class CacheTester {
 			// How many tokens should we test?
 			int numTokens = 50;
 			
+			// ArrayList for storing the tokens in the document
+			ArrayList<String> words = new ArrayList<String>();
+			
 			if(args.length==5) {
 				numTokens = Integer.parseInt(args[4]);
 			}
@@ -155,34 +158,57 @@ public class CacheTester {
 	
 			cacheTest = new Cache<String>(cacheSizeL1,cacheSizeL2,dictFileName);
 			
+			long startTime = System.currentTimeMillis();
+			
 			while(LineScan.hasNext() && !done) {
-				Scanner tokenScan = new Scanner(LineScan.nextLine());
-				while (tokenScan.hasNext() && !done) {
-					String thisToken = tokenScan.next();
-					wordIdx++;
-				
-					if (args.length==5) { // # tokens to test is specified
+//				Scanner tokenScan = new Scanner(LineScan.nextLine());
+				String[] tokenArr = null;// = LineScan.nextLine().split("\\s+|,|;|\n|\t|\r|\\(|\\)|\n\r|\r\n|\\.");
+				if(LineScan.nextLine().trim().length() > 0) {
+					tokenArr = LineScan.nextLine().split("\\s+|,|;|\t|\\(|\\)|\\.");
+				} 
+//				while (tokenScan.hasNext() && !done) {
+				if(!(tokenArr==null)) {
+					for(String s : tokenArr) {
+	//					String thisToken = tokenScan.next();
+						wordIdx++;
 					
-						if (wordIdx==currChooseWord){
-							chosenWords[chooseWordIdx-1] = thisToken;// + "\t["+wordIdx+"]";
-							wordIdx=0;
-							currChooseWord = chooseWords[chooseWordIdx];
-		
-							chooseWordIdx++;
+						if (args.length==5) { // # tokens to test is specified
+						
+							if (wordIdx==currChooseWord){
+	//							chosenWords[chooseWordIdx-1] = thisToken;// + "\t["+wordIdx+"]";
+								chosenWords[chooseWordIdx-1] = s;// + "\t["+wordIdx+"]";
+								wordIdx=0;
+								currChooseWord = chooseWords[chooseWordIdx];
+			
+								chooseWordIdx++;
+							}
+							
+							if (chooseWordIdx==numTokens) {
+								// Break out
+								done = true;
+							}
+						} else {
+	//						words.add(thisToken);
+							
+							// If the string starts and ends with a letter
+							if (s.matches("^[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)*$")) {
+								words.add(s);	
+							}
+							
+							
+	//						cacheTest.getObject(thisToken);
 						}
 						
-						if (chooseWordIdx==numTokens) {
-							// Break out
-							done = true;
-						}
-					} else {
-						cacheTest.getObject(thisToken);
 					}
-					
 				}
-				tokenScan.close();
+//				tokenScan.close();
 			}
 			LineScan.close();
+			
+			// Done building the dictionary
+			long elapsedTime = System.currentTimeMillis()-startTime;
+			
+			System.out.println("ElapsedTime to build dictionary: "+elapsedTime);
 			
 	//		for(String t : chosenWords) {
 	//			System.out.println(t);
@@ -193,6 +219,7 @@ public class CacheTester {
 			// Construct the 1-Cache and test
 	
 			int loopIdx = 0;
+			int wordsIdx = 0;
 			if (args.length==5) {
 				for(String s : chosenWords) {
 	//				System.out.println("Current Loop: ["+loopIdx+"]\n\n");
@@ -200,7 +227,16 @@ public class CacheTester {
 		//			System.out.println(cacheTest);
 					loopIdx++;
 				}
+			} else {
+				for(String s : words) {
+					wordsIdx++;
+					cacheTest.currProgress = (double)wordsIdx/(double)words.size();
+					cacheTest.getObject(s);
+//					System.out.println(s);
+				}
 			}
+			
+			System.out.println("Total tokens: "+words.size());
 			
 			// Print out the cache contents
 	//		System.out.println(cacheTest);
@@ -219,6 +255,9 @@ public class CacheTester {
 			System.out.println("1st-level cache hit ratio\t\t\t"+(((double)cacheTest.getnumHits(1)/(double)cacheTest.getnumRefs(1))));
 			System.out.println("Number of 2nd-level cache hits:\t"+cacheTest.getnumHits(2));
 			System.out.println("2nd-level cache hit ratio\t\t\t"+(((double)cacheTest.getnumHits(2)/(double)cacheTest.getnumRefs(2))));
+			
+			// Call the toString method
+			System.out.println(cacheTest);
 		} else {
 			throw new Exception("Error! Incorrect Arguments Provided!");
 		}		
